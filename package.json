@@ -1,6 +1,6 @@
 {
   "name": "next-paylaod-hanlder",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Custom handling of Next.js RSC payloads.",
   "keywords": [
     "next",
@@ -48,6 +48,9 @@
   "scripts": {
     "build": "tsup",
     "test": "vitest"
+  },
+  "dependencies": {
+    "redis": "^4.7.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.11.1",
