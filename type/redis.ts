@@ -1,4 +1,4 @@
-import type { RedisClientType } from 'redis';
+import type { RedisClientOptions, RedisClientType, RedisModules } from 'redis';
 
 export type RedisConfig = { url: string };
-export type { RedisClientType };
+export type { RedisClientOptions, RedisClientType, RedisModules };

@@ -1,4 +1,3 @@
-import { createClient } from 'redis';
 import type {
   CacheHandlerValue,
   CacheHandlerKey,
@@ -7,33 +6,22 @@ import type {
   CacheHandlerParametersSet,
   RedisClientType,
   RedisConfig,
+  RedisModules,
 } from '../type';
+import RedisClientManager from './redisClientManager';
 
 class PayloadCacheHandler {
-  private static redisClient: RedisClientType | null = null;
+  private static redisClient: RedisClientType<RedisModules> | null = null;
   private static redisConfig: RedisConfig | null = null;
 
   constructor(redisConfig: RedisConfig) {
     if (!PayloadCacheHandler.redisClient) {
-      PayloadCacheHandler.redisClient = createClient({
-        url: redisConfig.url,
-      });
-
-      PayloadCacheHandler.redisClient.on('error', (err) => {
-        console.error('Redis Client Error:', err);
-      });
-
-      PayloadCacheHandler.redisClient.on('connect', () => {
-        console.log('Redis connection successful');
-      });
-
-      PayloadCacheHandler.redisClient.connect();
+      PayloadCacheHandler.redisClient = RedisClientManager.getClient(redisConfig);
     }
-
     PayloadCacheHandler.redisConfig = redisConfig;
   }
 
-  static getRedisClient(): RedisClientType {
+  static getRedisClient(): RedisClientType<RedisModules> {
     if (!PayloadCacheHandler.redisClient) {
       throw new Error('Redis client has not been initialized.');
     }
