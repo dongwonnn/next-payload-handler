@@ -1,5 +1,5 @@
 {
-  "name": "next-paylaod-hanlder",
+  "name": "next-payload-handler",
   "version": "0.1.2",
   "description": "Custom handling of Next.js RSC payloads.",
   "keywords": [
@@ -9,9 +9,9 @@
     "cache invalidate",
     "payload"
   ],
-  "homepage": "https://github.com/dongwonnn/next-payload-hanlder#readme",
+  "homepage": "https://github.com/dongwonnn/next-payload-handler#readme",
   "bugs": {
-    "url": "https://github.com/dongwonnn/next-payload-hanlder/issues"
+    "url": "https://github.com/dongwonnn/next-payload-handler/issues"
   },
   "repository": {
     "type": "git",
