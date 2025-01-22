@@ -33,7 +33,7 @@ module.exports = nextConfig;
 ### redis 연결
 ```ts
 // cache-handler.mjs
-import PayloadCacheHandler from 'next-paylaod-hanlder';
+import PayloadCacheHandler from 'next-payload-hanlder';
 
 class CustomCacheHandler extends PayloadCacheHandler {
   constructor() {
