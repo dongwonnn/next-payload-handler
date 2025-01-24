@@ -1,1 +1,1 @@
-export { default as PayloadCacheHandler } from './payloadCacheHander';
+export { CacheHandler } from './CacheHandler';
