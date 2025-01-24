@@ -32,18 +32,29 @@ module.exports = nextConfig;
 
 ### redis 연결
 ```ts
-// cache-handler.mjs
-import PayloadCacheHandler from 'next-payload-hanlder';
+import { CacheHandler } from 'next-payload-hanlder';
+import { createClient } from 'redis';
 
-class CustomCacheHandler extends PayloadCacheHandler {
-  constructor() {
-    super({
-      socket: { host: "127.0.0.1", port: 6379 }
-    });
-  }
-}
+const createHandler = async () => {
+  const redisClient = createClient({
+    url: process.env.REDIS_URL, 
+  });
 
-export default CustomCacheHandler;
+  redisClient.on('error', (err) => {
+    console.error('Redis Client Error:', err)
+  });
+
+  redisClient.on('connect', () => {
+    console.log('Redis connection successful!');
+  });
+
+  await redisClient.connect();
+  return redisClient;
+};
+
+CacheHandler.initializeHandler(createHandler);
+
+export default CacheHandler;
 ```
 
 ### 커스텀 캐시 키 설정
