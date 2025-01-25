@@ -32,27 +32,26 @@ module.exports = nextConfig;
 
 ### redis 연결
 ```ts
+// ./cache-handler.mjs
 import { CacheHandler } from 'next-payload-hanlder';
 import { createClient } from 'redis';
 
 const createHandler = async () => {
-  const redisClient = createClient({
-    url: process.env.REDIS_URL, 
-  });
+    const redisClient = createClient({
+        url: process.env.REDIS_URL, 
+    });
 
-  redisClient.on('error', (err) => {
-    console.error('Redis Client Error:', err)
-  });
+    redisClient.on('error', (err) => console.error('Redis Client Error:', err));
 
-  redisClient.on('connect', () => {
-    console.log('Redis connection successful!');
-  });
+    redisClient.on('connect', () => {
+        console.log('Redis connection successful!');
+    });
 
-  await redisClient.connect();
-  return redisClient;
+    await redisClient.connect();
+    return redisClient;
 };
 
-CacheHandler.initializeHandler(createHandler);
+CacheHandler.initializeHandler('redis', createHandler);
 
 export default CacheHandler;
 ```
