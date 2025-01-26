@@ -6,12 +6,13 @@ import type {
   CacheHandlerParametersGet,
   CacheHandlerParametersSet,
   CacheHandlerValue,
+  optionsType,
 } from '../type';
 
 export class RedisHandler implements Handler {
   private client: RedisClientType;
 
-  constructor(client: RedisClientType) {
+  constructor(client: RedisClientType, options?: optionsType) {
     this.client = client;
   }
 
