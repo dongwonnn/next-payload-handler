@@ -11,7 +11,7 @@ export type CacheHandlerKey = CacheHandlerParametersGet[0] | CacheHandlerParamet
 export type HandlerType = 'redis' | 'gcs';
 export type ClientType = RedisClientType | GCSBucketType;
 export type HandlerInstanceType = InstanceType<typeof RedisHandler> | InstanceType<typeof GCSHandler>;
-export type optionsType = {
+export type HandlerOptionsType = {
   bucketPrefix: string;
 };
 

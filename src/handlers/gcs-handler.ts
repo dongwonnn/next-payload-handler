@@ -6,16 +6,16 @@ import type {
   CacheHandlerParametersGet,
   CacheHandlerParametersSet,
   CacheHandlerValue,
-  optionsType,
+  HandlerOptionsType,
 } from '../type';
 
 export class GCSHandler implements Handler {
   #bucket: Bucket;
-  readonly #bucketPrefix: string;
+  readonly #bucketPrefix?: string;
 
-  constructor(bucket: Bucket, options: optionsType) {
+  constructor(bucket: Bucket, options?: HandlerOptionsType) {
     this.#bucket = bucket;
-    this.#bucketPrefix = options.bucketPrefix;
+    this.#bucketPrefix = options?.bucketPrefix;
   }
 
   getCustomKey(key: CacheHandlerKey, tags?: CacheHandlerCtxTags): string {
