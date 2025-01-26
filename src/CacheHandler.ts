@@ -9,7 +9,7 @@ import type {
   HandlerType,
   ClientType,
   HandlerInstanceType,
-  optionsType,
+  HandlerOptionsType,
 } from './type';
 
 export class CacheHandler {
@@ -17,7 +17,7 @@ export class CacheHandler {
 
   static readonly #handlerCreators: Record<
     HandlerType,
-    (client: ClientType, options: optionsType) => HandlerInstanceType
+    (client: ClientType, options?: HandlerOptionsType) => HandlerInstanceType
   > = {
     redis: (client, options) => new RedisHandler(client as RedisClientType, options),
     gcs: (client, options) => new GCSHandler(client as GCSBucketType, options),
@@ -30,7 +30,7 @@ export class CacheHandler {
   }: {
     type: HandlerType;
     initialize: () => Promise<ClientType>;
-    options: optionsType;
+    options?: HandlerOptionsType;
   }): Promise<void> {
     if (CacheHandler.#handler) {
       console.log('Handler is already initialized.');
