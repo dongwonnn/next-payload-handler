@@ -1,20 +1,37 @@
-import { RedisHandler } from './handlers/redis-handler';
 import { Handler } from './interface/handler-interface';
-
-import type { RedisClientType, CacheHandlerParametersGet, CacheHandlerParametersSet, CacheHandlerValue } from './type';
-
-type HandlerType = 'redis';
-type ClientType = RedisClientType;
-type HandlerInstanceType = InstanceType<typeof RedisHandler>;
+import { RedisHandler, GCSHandler } from './handlers';
+import type {
+  Bucket as GCSBucketType,
+  RedisClientType,
+  CacheHandlerParametersGet,
+  CacheHandlerParametersSet,
+  CacheHandlerValue,
+  HandlerType,
+  ClientType,
+  HandlerInstanceType,
+  optionsType,
+} from './type';
 
 export class CacheHandler {
   static #handler: Handler | null = null;
 
-  static readonly #handlerCreators: Record<HandlerType, (client: ClientType) => HandlerInstanceType> = {
-    redis: (client) => new RedisHandler(client),
+  static readonly #handlerCreators: Record<
+    HandlerType,
+    (client: ClientType, options: optionsType) => HandlerInstanceType
+  > = {
+    redis: (client, options) => new RedisHandler(client as RedisClientType, options),
+    gcs: (client, options) => new GCSHandler(client as GCSBucketType, options),
   };
 
-  static async initializeHandler(type: HandlerType, initialize: () => Promise<ClientType>): Promise<void> {
+  static async initializeHandler({
+    type,
+    initialize,
+    options,
+  }: {
+    type: HandlerType;
+    initialize: () => Promise<ClientType>;
+    options: optionsType;
+  }): Promise<void> {
     if (CacheHandler.#handler) {
       console.log('Handler is already initialized.');
       return;
@@ -26,7 +43,7 @@ export class CacheHandler {
     }
 
     const client = await initialize();
-    CacheHandler.#handler = createHandler(client);
+    CacheHandler.#handler = createHandler(client, options);
     console.log(`Handler initialized for type: ${type}`);
   }
 
