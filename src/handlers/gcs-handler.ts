@@ -22,8 +22,13 @@ export class GCSHandler implements Handler {
     return tags && tags.length > 0 ? tags.join(',') : String(key);
   }
 
+  getFilePath(key: string, tags?: string[]): string {
+    const prefix = this.#bucketPrefix ? `${this.#bucketPrefix}/` : '';
+    return `${prefix}${this.getCustomKey(key, tags)}`;
+  }
+
   async get(key: CacheHandlerParametersGet[0], ctx: CacheHandlerParametersGet[1]): Promise<CacheHandlerValue | null> {
-    const filePath = `${this.#bucketPrefix}/${this.getCustomKey(key, ctx.tags)}`;
+    const filePath = this.getFilePath(key, ctx.tags);
     const bucketFile = this.#bucket.file(filePath);
 
     try {
@@ -43,7 +48,7 @@ export class GCSHandler implements Handler {
     value: CacheHandlerParametersSet[1],
     ctx: CacheHandlerParametersSet[2],
   ): Promise<void> {
-    const filePath = `${this.#bucketPrefix}/${this.getCustomKey(key, ctx.tags)}`;
+    const filePath = this.getFilePath(key, ctx.tags);
     const bucketFile = this.#bucket.file(filePath);
     const cacheData = {
       value,
