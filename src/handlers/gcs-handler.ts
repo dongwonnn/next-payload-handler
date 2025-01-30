@@ -32,7 +32,7 @@ export class GCSHandler implements Handler {
     const bucketFile = this.#bucket.file(filePath);
 
     try {
-      const [contents] = await bucketFile.download(); // 파일 내용 다운로드
+      const [contents] = await bucketFile.download();
       return JSON.parse(contents.toString());
     } catch (error: any) {
       if (error.code === 404) {
