@@ -1,3 +1,4 @@
+import path from 'path';
 import { Handler } from '../interface/handler-interface';
 import type {
   Bucket,
@@ -11,25 +12,25 @@ import type {
 
 export class GCSHandler implements Handler {
   #bucket: Bucket;
-  readonly #bucketPrefix?: string;
+  readonly #bucketPrefix: string;
 
   constructor(bucket: Bucket, options?: HandlerOptionsType) {
     this.#bucket = bucket;
-    this.#bucketPrefix = options?.bucketPrefix;
+    this.#bucketPrefix = options?.bucketPrefix ?? '';
   }
 
   getCustomKey(key: CacheHandlerKey, tags?: CacheHandlerCtxTags): string {
     return tags && tags.length > 0 ? tags.join(',') : String(key);
   }
 
-  getFilePath(key: string, tags?: string[]): string {
-    const prefix = this.#bucketPrefix ? `${this.#bucketPrefix}/` : '';
-    return `${prefix}${this.getCustomKey(key, tags)}`;
+  getBucketFile(fileName: string) {
+    const filePath = path.posix.join(this.#bucketPrefix, fileName);
+    return this.#bucket.file(filePath);
   }
 
   async get(key: CacheHandlerParametersGet[0], ctx: CacheHandlerParametersGet[1]): Promise<CacheHandlerValue | null> {
-    const filePath = this.getFilePath(key, ctx.tags);
-    const bucketFile = this.#bucket.file(filePath);
+    const fileName = this.getCustomKey(key, ctx.tags);
+    const bucketFile = this.getBucketFile(fileName);
 
     try {
       const [contents] = await bucketFile.download();
@@ -48,8 +49,9 @@ export class GCSHandler implements Handler {
     value: CacheHandlerParametersSet[1],
     ctx: CacheHandlerParametersSet[2],
   ): Promise<void> {
-    const filePath = this.getFilePath(key, ctx.tags);
-    const bucketFile = this.#bucket.file(filePath);
+    const fileName = this.getCustomKey(key, ctx.tags);
+    const bucketFile = this.getBucketFile(fileName);
+
     const cacheData = {
       value,
       lastModified: Date.now(),
