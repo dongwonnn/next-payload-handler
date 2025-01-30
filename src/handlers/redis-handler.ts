@@ -10,10 +10,10 @@ import type {
 } from '../type';
 
 export class RedisHandler implements Handler {
-  private client: RedisClientType;
+  #client: RedisClientType;
 
   constructor(client: RedisClientType, options?: HandlerOptionsType) {
-    this.client = client;
+    this.#client = client;
   }
 
   getCustomKey(key: CacheHandlerKey, tags?: CacheHandlerCtxTags): string {
@@ -23,7 +23,7 @@ export class RedisHandler implements Handler {
   async get(key: CacheHandlerParametersGet[0], ctx: CacheHandlerParametersGet[1]): Promise<CacheHandlerValue | null> {
     const redisKey = this.getCustomKey(key, ctx.tags);
     try {
-      const cachedValue = await this.client.get(redisKey);
+      const cachedValue = await this.#client.get(redisKey);
       return cachedValue ? JSON.parse(cachedValue) : null;
     } catch (error) {
       console.error('Error fetching from Redis:', error);
@@ -44,7 +44,7 @@ export class RedisHandler implements Handler {
     };
 
     try {
-      await this.client.set(redisKey, JSON.stringify(cacheData));
+      await this.#client.set(redisKey, JSON.stringify(cacheData));
     } catch (error) {
       console.error('Error setting value in Redis:', error);
     }
