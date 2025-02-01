@@ -2,6 +2,7 @@ import path from 'path';
 import { Handler } from '../interface/handler-interface';
 import type {
   Bucket,
+  GCPApiError,
   CacheHandlerCtxTags,
   CacheHandlerKey,
   CacheHandlerParametersGet,
@@ -35,8 +36,8 @@ export class GCSHandler implements Handler {
     try {
       const [contents] = await bucketFile.download();
       return JSON.parse(contents.toString());
-    } catch (error: any) {
-      if (error.code === 404) {
+    } catch (error) {
+      if ((error as GCPApiError).code === 404) {
         console.log(`Cache not found for key: ${key}`);
         return null;
       }

@@ -1,2 +1,3 @@
 import type { Bucket } from '@google-cloud/storage';
-export type { Bucket };
+import type { ApiError as GCPApiError } from '@google-cloud/common';
+export type { Bucket, GCPApiError };
