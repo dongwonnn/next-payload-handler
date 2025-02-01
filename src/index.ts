@@ -1,1 +1,1 @@
-export { CacheHandler } from './CacheHandler';
+export { CacheHandler } from './cache-handler';
