@@ -44,9 +44,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          npm --no-git-tag-version version patch
-          PACKAGE_VERSION=$(jq -r .version package.json)
-          
           git add package.json package-lock.json
           git commit -m "chore: bump up package version to $PACKAGE_VERSION"
           git push origin main        

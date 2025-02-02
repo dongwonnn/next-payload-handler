@@ -96,7 +96,7 @@ CacheHandler.initializeHandler(
 
 export default CacheHandler;
 ```
-cd ..
+
 ### 커스텀 캐시 키 설정
 ```ts
 fetch('/api/data', {
