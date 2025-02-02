@@ -2,17 +2,26 @@ import type { CacheHandler, CacheHandlerValue } from 'next/dist/server/lib/incre
 import type { Bucket as GCSBucketType, RedisClientType } from './index';
 import type { GCSHandler, RedisHandler } from '../handlers';
 
+export type { CacheHandlerValue, GCSHandler, RedisHandler };
+
 export type CacheHandlerParametersGet = Parameters<CacheHandler['get']>;
 export type CacheHandlerParametersSet = Parameters<CacheHandler['set']>;
 export type CacheHandlerCtxTags = CacheHandlerParametersGet[1]['tags'] | CacheHandlerParametersSet[2]['tags'];
 export type CacheHandlerKey = CacheHandlerParametersGet[0] | CacheHandlerParametersSet[0];
 
-// TODO: fix generic type
-export type HandlerType = 'redis' | 'gcs';
-export type ClientType = RedisClientType | GCSBucketType;
-export type HandlerInstanceType = InstanceType<typeof RedisHandler> | InstanceType<typeof GCSHandler>;
+type HandlerTypeToClient = {
+  redis: RedisClientType;
+  gcs: GCSBucketType;
+};
+
+type HandlerTypeToInstance = {
+  redis: InstanceType<typeof RedisHandler>;
+  gcs: InstanceType<typeof GCSHandler>;
+};
+
+export type HandlerType = keyof HandlerTypeToClient;
+export type ClientType<T extends HandlerType = HandlerType> = HandlerTypeToClient[T];
+export type HandlerInstanceType<T extends HandlerType = HandlerType> = HandlerTypeToInstance[T];
 export type HandlerOptionsType = {
   bucketPrefix: string;
 };
-
-export type { CacheHandlerValue, GCSHandler, RedisHandler };

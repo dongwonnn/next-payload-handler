@@ -1,8 +1,6 @@
-import { Handler } from './interface/handler-interface';
 import { RedisHandler, GCSHandler } from './handlers';
+import { Handler } from './interface/handler-interface';
 import type {
-  Bucket as GCSBucketType,
-  RedisClientType,
   CacheHandlerParametersGet,
   CacheHandlerParametersSet,
   CacheHandlerValue,
@@ -15,21 +13,20 @@ import type {
 export class CacheHandler {
   static #handler: Handler | null = null;
 
-  static readonly #handlerCreators: Record<
-    HandlerType,
-    (client: ClientType, options?: HandlerOptionsType) => HandlerInstanceType
-  > = {
-    redis: (client, options) => new RedisHandler(client as RedisClientType, options),
-    gcs: (client, options) => new GCSHandler(client as GCSBucketType, options),
+  static readonly #handlerCreators: {
+    [T in HandlerType]: (client: ClientType<T>, options?: HandlerOptionsType) => HandlerInstanceType<T>;
+  } = {
+    redis: (client, options) => new RedisHandler(client, options),
+    gcs: (client, options) => new GCSHandler(client, options),
   };
 
-  static async initializeHandler({
+  static async initializeHandler<T extends HandlerType>({
     type,
     initialize,
     options,
   }: {
-    type: HandlerType;
-    initialize: () => Promise<ClientType>;
+    type: T;
+    initialize: () => Promise<ClientType<T>>;
     options?: HandlerOptionsType;
   }): Promise<void> {
     if (CacheHandler.#handler) {
