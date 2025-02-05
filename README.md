@@ -100,6 +100,8 @@ export default CacheHandler;
 ### 커스텀 캐시 키 설정
 ```ts
 fetch('/api/data', {
+  ...,
+  method: 'GET',
   next: { tags: ['custom-key'] },
 });
 ```
