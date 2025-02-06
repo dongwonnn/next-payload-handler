@@ -1,8 +1,6 @@
-import type { CacheHandler, CacheHandlerValue } from 'next/dist/server/lib/incremental-cache';
-import type { Bucket as GCSBucketType, RedisClientType } from './index';
+import type { Bucket as GCSBucketType, RedisClientType, CacheHandler } from './index';
 import type { GCSHandler, RedisHandler } from '../handlers';
-
-export type { CacheHandlerValue, GCSHandler, RedisHandler };
+export type { GCSHandler, RedisHandler };
 
 export type CacheHandlerParametersGet = Parameters<CacheHandler['get']>;
 export type CacheHandlerParametersSet = Parameters<CacheHandler['set']>;
