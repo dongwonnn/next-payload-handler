@@ -48,7 +48,21 @@ export class CacheHandler {
     if (!CacheHandler.#handler) {
       throw new Error('Handler is not initialized.');
     }
-    return CacheHandler.#handler.get(key, ctx);
+
+    const cacheData = await CacheHandler.#handler.get(key, ctx);
+    if (!cacheData) return null;
+
+    const { value, lastModified } = cacheData;
+    if (value?.kind === 'FETCH') {
+      if (value.revalidate === 0) return null;
+
+      const now = Date.now();
+      const cacheAge = Math.floor((now - (lastModified || now)) / 1000);
+
+      if (cacheAge >= value.revalidate) return null;
+    }
+
+    return cacheData;
   }
 
   async set(
