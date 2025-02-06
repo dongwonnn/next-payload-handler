@@ -47,6 +47,7 @@
   },
   "scripts": {
     "build": "tsup",
+    "watch": "tsup --watch",
     "test": "vitest"
   },
   "devDependencies": {
