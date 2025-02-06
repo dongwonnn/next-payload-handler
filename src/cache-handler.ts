@@ -12,6 +12,7 @@ import type {
 
 export class CacheHandler {
   static #handler: Handler | null = null;
+  static #initializationPromise: Promise<void> | null = null;
 
   static readonly #handlerCreators: {
     [T in HandlerType]: (client: ClientType<T>, options?: HandlerOptionsType) => HandlerInstanceType<T>;
@@ -29,22 +30,30 @@ export class CacheHandler {
     initialize: () => Promise<ClientType<T>>;
     options?: HandlerOptionsType;
   }): Promise<void> {
-    if (CacheHandler.#handler) {
-      console.log('Handler is already initialized.');
-      return;
+    if (CacheHandler.#initializationPromise) {
+      return CacheHandler.#initializationPromise;
     }
 
-    const createHandler = CacheHandler.#handlerCreators[type];
-    if (!createHandler) {
-      throw new Error(`Unsupported client type: ${type}`);
-    }
+    CacheHandler.#initializationPromise = (async () => {
+      if (CacheHandler.#handler) {
+        console.log('Handler is already initialized.');
+        return;
+      }
 
-    const client = await initialize();
-    CacheHandler.#handler = createHandler(client, options);
-    console.log(`Handler initialized for type: ${type}`);
+      const createHandler = CacheHandler.#handlerCreators[type];
+      if (!createHandler) {
+        throw new Error(`Unsupported client type: ${type}`);
+      }
+
+      const client = await initialize();
+      CacheHandler.#handler = createHandler(client, options);
+    })();
+
+    return CacheHandler.#initializationPromise;
   }
 
   async get(key: CacheHandlerParametersGet[0], ctx: CacheHandlerParametersGet[1]): Promise<CacheHandlerValue | null> {
+    await CacheHandler.#initializationPromise;
     if (!CacheHandler.#handler) {
       throw new Error('Handler is not initialized.');
     }
@@ -70,6 +79,7 @@ export class CacheHandler {
     value: CacheHandlerParametersSet[1],
     ctx: CacheHandlerParametersSet[2],
   ): Promise<void> {
+    await CacheHandler.#initializationPromise;
     if (!CacheHandler.#handler) {
       throw new Error('Handler is not initialized.');
     }
