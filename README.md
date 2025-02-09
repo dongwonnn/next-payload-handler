@@ -33,13 +33,12 @@ module.exports = nextConfig;
 ## `initializeHandler` 메서드 (핸들러 설정)
 
 `initializeHandler` 메서드는 특정 타입의 핸들러를 초기화하는 역할을 합니다.  
-객체 형태의 인자를 받아 `type`, `initialize`, `options` 세 가지 값을 전달해야 합니다.
 
 <table>
   <thead>
     <tr>
       <th>파라미터</th>
-      <th>가능한 값</th>
+      <th>값</th>
       <th>타입</th>
       <th>설명</th>
     </tr>
@@ -53,8 +52,8 @@ module.exports = nextConfig;
     </tr>
     <tr>
       <td>initialize</td>
-      <td>
-        async redisClient() | <br/>
+      <td style="width: 18%">
+        async redisClient() |<br/>
         async gcsBucket()
       </td>
       <td>function</td>
