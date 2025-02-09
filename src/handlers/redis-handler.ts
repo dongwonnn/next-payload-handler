@@ -16,8 +16,8 @@ export class RedisHandler implements Handler {
     this.#client = client;
   }
 
-  getCustomKey(key: CacheHandlerKey, tags?: CacheHandlerCtxTags): string {
-    return tags && tags.length > 0 ? tags.join(',') : String(key);
+  getCustomKey(key: CacheHandlerKey, tags: CacheHandlerCtxTags): string {
+    return tags?.length ? JSON.stringify(tags) : key;
   }
 
   async get(key: CacheHandlerParametersGet[0], ctx: CacheHandlerParametersGet[1]): Promise<CacheHandlerValue | null> {
