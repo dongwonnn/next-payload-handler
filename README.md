@@ -30,6 +30,52 @@ const nextConfig = {
 module.exports = nextConfig;
 ```
 
+## `initializeHandler` 메서드 (핸들러 설정)
+
+`initializeHandler` 메서드는 특정 타입의 핸들러를 초기화하는 역할을 합니다.  
+객체 형태의 인자를 받아 `type`, `initialize`, `options` 세 가지 값을 전달해야 합니다.
+
+<table>
+  <thead>
+    <tr>
+      <th>파라미터</th>
+      <th>가능한 값</th>
+      <th>타입</th>
+      <th>설명</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>type</td>
+      <td>redis | gcs</td>
+      <td>string</td>
+      <td>초기화할 핸들러의 타입입니다. ("redis" 또는 "gcs" 사용 가능)</td>
+    </tr>
+    <tr>
+      <td>initialize</td>
+      <td>
+        async redisClient() | <br/>
+        async gcsBucket()
+      </td>
+      <td>function</td>
+      <td>핸들러를 생성하고 반환하는 함수입니다.</td>
+    </tr>
+    <tr>
+      <td rowspan="2">options (optional)</td>
+      <td>bucketPrefix</td>
+      <td>string</td>
+      <td>스토리지를 사용할 경우, 저장 경로의 기본 prefix를 지정합니다.</td>
+    </tr>
+    <tr>
+      <td>cacheNamespace</td>
+      <td>string</td>
+      <td>캐시 키의 네임스페이스를 지정하여 키 충돌을 방지합니다.</td>
+    </tr>
+  </tbody>
+</table>
+
+
+
 ## redis
 ### redis 설치
 ```sh
@@ -108,5 +154,8 @@ fetch('/api/data', {
 
 ### 캐시 키 관리 (BFF/백엔드에서 캐시 삭제)
 ```ts
-redisClient.del('custom-key')
+const namespace = 'my-namespace'; // 네임스페이스 (없을 경우 생략 가능)
+const key = JSON.stringify(namespace ? [`${namespace}:custom-key`] : ['custom-key']);
+
+customHandler.del(key);
 ```
