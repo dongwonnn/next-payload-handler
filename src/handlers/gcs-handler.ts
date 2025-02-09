@@ -20,8 +20,8 @@ export class GCSHandler implements Handler {
     this.#bucketPrefix = options?.bucketPrefix ?? '';
   }
 
-  getCustomKey(key: CacheHandlerKey, tags?: CacheHandlerCtxTags): string {
-    return tags && tags.length > 0 ? tags.join(',') : String(key);
+  getCustomKey(key: CacheHandlerKey, tags: CacheHandlerCtxTags): string {
+    return tags?.length ? JSON.stringify(tags) : key;
   }
 
   getBucketFile(fileName: string) {
