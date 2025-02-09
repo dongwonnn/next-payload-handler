@@ -1,10 +1,10 @@
 import path from 'path';
 import { Handler } from '../interface/handler-interface';
+import { getCustomKey } from '../util/cache-util';
+
 import type {
   Bucket,
   GCPApiError,
-  CacheHandlerCtxTags,
-  CacheHandlerKey,
   CacheHandlerParametersGet,
   CacheHandlerParametersSet,
   CacheHandlerValue,
@@ -20,17 +20,13 @@ export class GCSHandler implements Handler {
     this.#bucketPrefix = options?.bucketPrefix ?? '';
   }
 
-  getCustomKey(key: CacheHandlerKey, tags: CacheHandlerCtxTags): string {
-    return tags?.length ? JSON.stringify(tags) : key;
-  }
-
   getBucketFile(fileName: string) {
     const filePath = path.posix.join(this.#bucketPrefix, fileName);
     return this.#bucket.file(filePath);
   }
 
   async get(key: CacheHandlerParametersGet[0], ctx: CacheHandlerParametersGet[1]): Promise<CacheHandlerValue | null> {
-    const fileName = this.getCustomKey(key, ctx.tags);
+    const fileName = getCustomKey(key, ctx.tags);
     const bucketFile = this.getBucketFile(fileName);
 
     try {
@@ -50,7 +46,7 @@ export class GCSHandler implements Handler {
     value: CacheHandlerParametersSet[1],
     ctx: CacheHandlerParametersSet[2],
   ): Promise<void> {
-    const fileName = this.getCustomKey(key, ctx.tags);
+    const fileName = getCustomKey(key, ctx.tags);
     const bucketFile = this.getBucketFile(fileName);
 
     const cacheData = {
