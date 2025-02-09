@@ -10,14 +10,16 @@ import type {
 } from '../type';
 
 export class RedisHandler implements Handler {
-  #client: RedisClientType;
+  readonly #client: RedisClientType;
+  readonly #cacheNamespace?: string;
 
   constructor(client: RedisClientType, options?: HandlerOptionsType) {
     this.#client = client;
+    this.#cacheNamespace = options?.cacheNamespace;
   }
 
   async get(key: CacheHandlerParametersGet[0], ctx: CacheHandlerParametersGet[1]): Promise<CacheHandlerValue | null> {
-    const redisKey = getCustomKey(key, ctx.tags);
+    const redisKey = getCustomKey({ key, tags: ctx.tags, namespace: this.#cacheNamespace });
     try {
       const cachedValue = await this.#client.get(redisKey);
       return cachedValue ? JSON.parse(cachedValue) : null;
@@ -32,7 +34,7 @@ export class RedisHandler implements Handler {
     value: CacheHandlerParametersSet[1],
     ctx: CacheHandlerParametersSet[2],
   ): Promise<void> {
-    const redisKey = getCustomKey(key, ctx.tags);
+    const redisKey = getCustomKey({ key, tags: ctx.tags, namespace: this.#cacheNamespace });
     const cacheData = {
       value,
       lastModified: Date.now(),
