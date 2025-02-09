@@ -1,5 +1,6 @@
 import { RedisHandler, GCSHandler } from './handlers';
 import { Handler } from './interface/handler-interface';
+
 import type {
   CacheHandlerParametersGet,
   CacheHandlerParametersSet,
@@ -28,7 +29,7 @@ export class CacheHandler {
   }: {
     type: T;
     initialize: () => Promise<ClientType<T>>;
-    options?: HandlerOptionsType;
+    options: HandlerOptionsType;
   }): Promise<void> {
     if (CacheHandler.#initializationPromise) {
       return CacheHandler.#initializationPromise;

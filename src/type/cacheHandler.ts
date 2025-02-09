@@ -21,5 +21,6 @@ export type HandlerType = keyof HandlerTypeToClient;
 export type ClientType<T extends HandlerType = HandlerType> = HandlerTypeToClient[T];
 export type HandlerInstanceType<T extends HandlerType = HandlerType> = HandlerTypeToInstance[T];
 export type HandlerOptionsType = {
-  bucketPrefix: string;
+  bucketPrefix?: string;
+  cacheNamespace?: string;
 };
