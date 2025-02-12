@@ -4,7 +4,7 @@
     "lib": ["esnext", "dom", "dom.iterable"],
     "module": "commonjs",
     "target": "es2021",
-    "types": ["node", "vitest/globals"],
+    "types": ["node", "next", "vitest/globals"],
     "skipLibCheck": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true
@@ -12,4 +12,3 @@
   "include": ["src"],
   "exclude": ["node_modules"]
 }
-
