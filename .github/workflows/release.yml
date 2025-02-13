@@ -1,4 +1,4 @@
-name: Bump Patch Version and Publish
+name: Bump Version and Publish
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   bump-and-publish:
-    name: Bump Patch Version and Publish to NPM
+    name: Bump Version and Publish to NPM
     if: "! contains(toJSON(github.event.pull_request.labels.*.name), 'release-skip')"
     runs-on: ubuntu-latest
 
@@ -30,14 +30,22 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Bump patch version
-        run: npm version patch --no-git-tag-version
+      - name: Determine version bump type
+        id: version_type
+        run: |
+          if echo "${{ toJSON(github.event.pull_request.labels.*.name) }}" | grep -q 'release-minor'; then
+            echo "version_type=minor" >> $GITHUB_ENV
+          else
+            echo "version_type=patch" >> $GITHUB_ENV
+          fi
+
+      - name: Bump version
+        run: npm version ${{ env.version_type }} --no-git-tag-version
 
       - name: Publish NPM
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          npm publish
+        run: npm publish
 
       - name: Commit and Push
         run: |
