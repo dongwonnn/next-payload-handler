@@ -1,5 +1,4 @@
 import { Handler } from '../interface/handler-interface';
-import { getCustomKey } from '../util/cache-util';
 
 import type {
   RedisClientType,
@@ -19,7 +18,7 @@ export class RedisHandler implements Handler {
   }
 
   async get(key: CacheHandlerParametersGet[0], ctx: CacheHandlerParametersGet[1]): Promise<CacheHandlerValue | null> {
-    const redisKey = getCustomKey({ key, tags: ctx.tags, namespace: this.#cacheNamespace });
+    const redisKey = `${this.#cacheNamespace}:${key}`;
     try {
       const cachedValue = await this.#client.get(redisKey);
       return cachedValue ? JSON.parse(cachedValue) : null;
@@ -34,7 +33,7 @@ export class RedisHandler implements Handler {
     value: CacheHandlerParametersSet[1],
     ctx: CacheHandlerParametersSet[2],
   ): Promise<void> {
-    const redisKey = getCustomKey({ key, tags: ctx.tags, namespace: this.#cacheNamespace });
+    const redisKey = `${this.#cacheNamespace}:${key}`;
     const cacheData = {
       value,
       lastModified: Date.now(),

@@ -1,6 +1,5 @@
 import path from 'path';
 import { Handler } from '../interface/handler-interface';
-import { getCustomKey } from '../util/cache-util';
 
 import type {
   Bucket,
@@ -28,7 +27,7 @@ export class GCSHandler implements Handler {
   }
 
   async get(key: CacheHandlerParametersGet[0], ctx: CacheHandlerParametersGet[1]): Promise<CacheHandlerValue | null> {
-    const fileName = getCustomKey({ key, tags: ctx.tags, namespace: this.#cacheNamespace });
+    const fileName = `${this.#cacheNamespace}:${key}`;
     const bucketFile = this.getBucketFile(fileName);
 
     try {
@@ -48,7 +47,7 @@ export class GCSHandler implements Handler {
     value: CacheHandlerParametersSet[1],
     ctx: CacheHandlerParametersSet[2],
   ): Promise<void> {
-    const fileName = getCustomKey({ key, tags: ctx.tags, namespace: this.#cacheNamespace });
+    const fileName = `${this.#cacheNamespace}:${key}`;
     const bucketFile = this.getBucketFile(fileName);
 
     const cacheData = {

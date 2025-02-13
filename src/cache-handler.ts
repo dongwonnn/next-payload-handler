@@ -1,5 +1,6 @@
 import { RedisHandler, GCSHandler } from './handlers';
 import { Handler } from './interface/handler-interface';
+import { extractCacheMetadata } from './util/parse-ctx';
 
 import type {
   CacheHandlerParametersGet,
@@ -53,13 +54,19 @@ export class CacheHandler {
     return CacheHandler.#initializationPromise;
   }
 
-  async get(key: CacheHandlerParametersGet[0], ctx: CacheHandlerParametersGet[1]): Promise<CacheHandlerValue | null> {
+  async get(
+    nextKey: CacheHandlerParametersGet[0],
+    rawCtx: CacheHandlerParametersGet[1],
+  ): Promise<CacheHandlerValue | null> {
     await CacheHandler.#initializationPromise;
     if (!CacheHandler.#handler) {
       throw new Error('Handler is not initialized.');
     }
 
-    const cacheData = await CacheHandler.#handler.get(key, ctx);
+    const { cacheKey } = extractCacheMetadata(rawCtx);
+    const key = cacheKey ?? nextKey;
+
+    const cacheData = await CacheHandler.#handler.get(key, rawCtx);
     if (!cacheData) return null;
 
     const { value, lastModified } = cacheData;
@@ -76,14 +83,18 @@ export class CacheHandler {
   }
 
   async set(
-    key: CacheHandlerParametersSet[0],
+    nextKey: CacheHandlerParametersSet[0],
     value: CacheHandlerParametersSet[1],
-    ctx: CacheHandlerParametersSet[2],
+    rawCtx: CacheHandlerParametersSet[2],
   ): Promise<void> {
     await CacheHandler.#initializationPromise;
     if (!CacheHandler.#handler) {
       throw new Error('Handler is not initialized.');
     }
+
+    const { cacheKey, ctx } = extractCacheMetadata(rawCtx);
+    const key = cacheKey ?? nextKey;
+
     await CacheHandler.#handler.set(key, value, ctx);
   }
 }
