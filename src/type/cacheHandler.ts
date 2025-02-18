@@ -17,10 +17,19 @@ type HandlerTypeToInstance = {
   gcs: InstanceType<typeof GCSHandler>;
 };
 
+type HandlerTypeToOptions = {
+  redis: {};
+  gcs: {
+    bucketName?: string;
+  };
+};
+
 export type HandlerType = keyof HandlerTypeToClient;
 export type ClientType<T extends HandlerType = HandlerType> = HandlerTypeToClient[T];
 export type HandlerInstanceType<T extends HandlerType = HandlerType> = HandlerTypeToInstance[T];
-export type HandlerOptionsType = {
-  bucketPrefix?: string;
-  cacheNamespace?: string;
+export type HandlerOptionsType<T extends HandlerType = HandlerType> = HandlerTypeToOptions[T];
+
+export type CacheOptionsType = {
+  namespace?: string;
+  maxCacheSize?: number;
 };
