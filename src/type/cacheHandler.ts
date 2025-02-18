@@ -20,7 +20,7 @@ type HandlerTypeToInstance = {
 type HandlerTypeToOptions = {
   redis: {};
   gcs: {
-    bucketName?: string;
+    bucketPrefix?: string;
   };
 };
 

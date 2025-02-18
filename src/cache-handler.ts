@@ -22,7 +22,7 @@ export class CacheHandler {
   static readonly #handlerCreators: {
     [T in HandlerType]: (client: ClientType<T>, options?: HandlerOptionsType<T>) => HandlerInstanceType<T>;
   } = {
-    redis: (client, options) => new RedisHandler(client, options),
+    redis: (client) => new RedisHandler(client),
     gcs: (client, options) => new GCSHandler(client, options),
   };
 
@@ -95,7 +95,7 @@ export class CacheHandler {
     const targetHandler = CacheHandler.getHandler(targetHandlerType);
 
     const key = cacheKey ?? nextKey;
-    const cacheData = await targetHandler.get(key, rawCtx);
+    const cacheData = await targetHandler.get(key);
     if (!cacheData) return null;
 
     const { value, lastModified } = cacheData;
