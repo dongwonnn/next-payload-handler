@@ -1,8 +1,7 @@
 import { RedisHandler, GCSHandler } from './handlers';
-import { Handler } from './interface/handler-interface';
 import { extractCacheMetadata } from './util/parse-ctx';
 
-import type {
+import {
   CacheHandlerParametersGet,
   CacheHandlerParametersSet,
   CacheHandlerValue,
@@ -10,48 +9,79 @@ import type {
   ClientType,
   HandlerInstanceType,
   HandlerOptionsType,
+  CacheOptionsType,
 } from './type';
 
+const DEFAULT_HANDLER = 'redis';
+
 export class CacheHandler {
-  static #handler: Handler | null = null;
+  static #handlers: Map<HandlerType, HandlerInstanceType> = new Map();
   static #initializationPromise: Promise<void> | null = null;
+  static #defaultHandler: HandlerType = DEFAULT_HANDLER;
 
   static readonly #handlerCreators: {
-    [T in HandlerType]: (client: ClientType<T>, options?: HandlerOptionsType) => HandlerInstanceType<T>;
+    [T in HandlerType]: (client: ClientType<T>, options?: HandlerOptionsType<T>) => HandlerInstanceType<T>;
   } = {
     redis: (client, options) => new RedisHandler(client, options),
     gcs: (client, options) => new GCSHandler(client, options),
   };
 
   static async initializeHandler<T extends HandlerType>({
-    type,
-    initialize,
-    options,
+    handlers,
+    defaultHandler,
+    cacheOptions,
   }: {
-    type: T;
-    initialize: () => Promise<ClientType<T>>;
-    options: HandlerOptionsType;
+    handlers: {
+      type: T;
+      initialize: () => Promise<ClientType<T>>;
+      options?: HandlerOptionsType;
+    }[];
+    defaultHandler?: HandlerType;
+    cacheOptions: CacheOptionsType;
   }): Promise<void> {
     if (CacheHandler.#initializationPromise) {
-      return CacheHandler.#initializationPromise;
+      await CacheHandler.#initializationPromise;
+      return;
     }
 
+    CacheHandler.#defaultHandler = defaultHandler ?? DEFAULT_HANDLER;
+
     CacheHandler.#initializationPromise = (async () => {
-      if (CacheHandler.#handler) {
-        console.log('Handler is already initialized.');
-        return;
-      }
+      const results = await Promise.allSettled(
+        handlers.map(async ({ type, initialize, options }) => {
+          try {
+            const createHandler = CacheHandler.#handlerCreators[type];
+            if (!createHandler) {
+              throw new Error(`Unsupported client type: ${type}`);
+            }
+            const client = await initialize();
+            return { type, handler: createHandler(client, options) };
+          } catch (error) {
+            console.error(`Failed to initialize handler for type: ${type}`, error);
+            return null;
+          }
+        }),
+      );
 
-      const createHandler = CacheHandler.#handlerCreators[type];
-      if (!createHandler) {
-        throw new Error(`Unsupported client type: ${type}`);
-      }
-
-      const client = await initialize();
-      CacheHandler.#handler = createHandler(client, options);
+      results.forEach((result) => {
+        if (result.status === 'fulfilled' && result.value) {
+          CacheHandler.#handlers.set(result.value.type, result.value.handler);
+        }
+      });
     })();
 
     return CacheHandler.#initializationPromise;
+  }
+
+  static getHandler<T extends HandlerType>(type: T): HandlerInstanceType<T> {
+    const handlerType = type ?? CacheHandler.#defaultHandler;
+    const handler = CacheHandler.#handlers.get(handlerType);
+
+    if (!handler) {
+      throw new Error(`Handler not found for type: ${handlerType}`);
+    }
+
+    return handler as HandlerInstanceType<T>;
   }
 
   async get(
@@ -59,14 +89,13 @@ export class CacheHandler {
     rawCtx: CacheHandlerParametersGet[1],
   ): Promise<CacheHandlerValue | null> {
     await CacheHandler.#initializationPromise;
-    if (!CacheHandler.#handler) {
-      throw new Error('Handler is not initialized.');
-    }
 
-    const { cacheKey } = extractCacheMetadata(rawCtx);
+    const { cacheKey, handlerType } = extractCacheMetadata(rawCtx);
+    const targetHandlerType = handlerType ?? CacheHandler.#defaultHandler;
+    const targetHandler = CacheHandler.getHandler(targetHandlerType);
+
     const key = cacheKey ?? nextKey;
-
-    const cacheData = await CacheHandler.#handler.get(key, rawCtx);
+    const cacheData = await targetHandler.get(key, rawCtx);
     if (!cacheData) return null;
 
     const { value, lastModified } = cacheData;
@@ -88,13 +117,12 @@ export class CacheHandler {
     rawCtx: CacheHandlerParametersSet[2],
   ): Promise<void> {
     await CacheHandler.#initializationPromise;
-    if (!CacheHandler.#handler) {
-      throw new Error('Handler is not initialized.');
-    }
 
-    const { cacheKey, ctx } = extractCacheMetadata(rawCtx);
+    const { cacheKey, handlerType, ctx } = extractCacheMetadata(rawCtx);
+    const targetHandlerType = handlerType ?? CacheHandler.#defaultHandler;
+    const targetHandler = CacheHandler.getHandler(targetHandlerType);
+
     const key = cacheKey ?? nextKey;
-
-    await CacheHandler.#handler.set(key, value, ctx);
+    await targetHandler.set(key, value, ctx);
   }
 }
