@@ -1,7 +1,7 @@
 # next-payload-handler &middot; [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-`next-payload-handler`는 **Next.js의 payload cache key-value를 외부 저장소( Redis, Storage )에 저장하고 관리할 수 있는 라이브러리**입니다.  
-Next.js의 캐시 키를 커스텀하고, 이를 Next.js 서버뿐만 아니라 **백엔드/BFF 서버에서도 핸들링할 수 있도록** 도와줍니다.
+`next-payload-handler`는 **Next.js의 payload cache를 외부 저장소( Redis, Storage )에 저장하고 관리할 수 있는 라이브러리**입니다.  
+Next.js의 캐시 키를 커스텀해 설정하고, 이를 Next.js 서버뿐만 아니라 **백엔드/BFF 서버에서도 핸들링할 수 있도록** 도와줍니다.
 
 ## 설치
 ```sh
@@ -9,11 +9,13 @@ npm install next-payload-handler
 ```
 
 ## 특징
-- **Next.js의 payload key-value를 외부 저장소에 저장**
-  - Next.js의 **fetch cache key 및 payload 데이터를 외부 저장소에 저장**하여, **분산된 환경에서도 일관된 캐싱**을 유지할 수 있습니다.
-- **커스텀 키 지원 (patchFetch 함수의 옵션의 cacheKey 사용)**
-  - patchFetch 함수를 이용해 cacheKey 옵션을 활용하여 **캐시 키를 커스텀 가능**.
-  - **Next.js 서버가 아닌 백엔드/BFF 서버에서도** Next.js의 캐시를 핸들링할 수 있습니다.
+- **Next.js의 payload cache를 외부 저장소에 저장**
+  - Next.js의 **fetch cache key 및 payload 데이터를 외부 저장소에 저장**하여, **분산 환경에서도 일관된 캐싱**을 유지
+- **멀티 핸들러 지원**
+  - Redis, GCS 등 다양한 핸들러를 동시에 등록하여 사용할 수 있으며, 각 요청별로 사용할 핸들러를 선택
+- **커스텀 키 지원**
+  - patchFetch 함수를 이용해 cacheKey 옵션을 활용하여 캐시 키를 커스텀 가능. 
+  - Next.js 서버가 아닌 백엔드/BFF 서버에서도 Next.js의 캐시를 핸들링할 수 있습니다.
 
 ## 사용법
 ### next config 설정
@@ -27,50 +29,45 @@ const nextConfig = {
 module.exports = nextConfig;
 ```
 
-## `initializeHandler` 메서드 (핸들러 설정)
+## initializeHandler 메서드
 
-`initializeHandler` 메서드는 특정 타입의 핸들러를 초기화하는 역할을 합니다.  
+`initializeHandler` 메서드는 다양한 핸들러를 동시에 초기화할 수 있으며, 필요에 따라 특정 핸들러를 선택하여 사용할 수 있습니다.
 
-<table>
-  <thead>
-    <tr>
-      <th>파라미터</th>
-      <th>값</th>
-      <th>타입</th>
-      <th>설명</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>type</td>
-      <td>redis | gcs</td>
-      <td>string</td>
-      <td>초기화할 핸들러의 타입입니다. ("redis" 또는 "gcs" 사용 가능)</td>
-    </tr>
-    <tr>
-      <td>initialize</td>
-      <td style="width: 18%">
-        async redisClient() |<br/>
-        async gcsBucket()
-      </td>
-      <td>function</td>
-      <td>핸들러를 생성하고 반환하는 함수입니다.</td>
-    </tr>
-    <tr>
-      <td rowspan="2">options (optional)</td>
-      <td>bucketPrefix</td>
-      <td>string</td>
-      <td>스토리지를 사용할 경우, 저장 경로의 기본 prefix를 지정합니다.</td>
-    </tr>
-    <tr>
-      <td>cacheNamespace</td>
-      <td>string</td>
-      <td>캐시 키의 네임스페이스를 지정하여 키 충돌을 방지합니다.</td>
-    </tr>
-  </tbody>
-</table>
+### handlers
+**Type:** `Array` (최소 1개 필수)  
+각 핸들러 객체는 다음 속성을 포함함:
+- **type** (`redis` | `gcs`)
+  - 핸들러의 타입을 지정 (`'redis'`, `'gcs'`)
+- **initialize** (`function`)
+  - 핸들러를 생성하고 반환하는 비동기 함수
+- **options** (`object`, 선택사항)
+  - 핸들러별 설정 값
+  - **bucketPrefix** (`string`)
+    - GCS 사용 시, 버킷 내 기본 저장 경로 지정
 
+### defaultHandler
+**Type:** `'redis' | 'gcs'`  
+**Default:** `'redis'`  
+기본적으로 사용할 핸들러를 지정
 
+### cacheOptions
+**Type:** `object` (선택사항)
+- **namespace** (`string`)
+  - 캐시 키 네임스페이스를 지정하여 키 충돌 방지
+
+## 예제
+```ts
+CacheHandler.initializeHandler({
+  handlers: [
+    { type: 'redis', initialize: redisInitialize },
+    { type: 'gcs', initialize: gcsInitialize, options: { bucketPrefix:  process.env.GCS_BUCKET_PREFIX } },
+  ],
+  defaultHandler: 'redis',
+  cacheOptions: {
+    namespace:  process.env.NAMESPACE, 
+  }
+});
+```
 
 ## redis
 ### redis 설치
@@ -84,7 +81,7 @@ npm install redis
 import { CacheHandler } from 'next-payload-hanlder';
 import { createClient } from 'redis';
 
-const initialize = async () => {
+const redisInitialize = async () => {
     const redisClient = createClient({
         url: process.env.REDIS_URL, 
     });
@@ -99,12 +96,16 @@ const initialize = async () => {
     return redisClient;
 };
 
-CacheHandler.initializeHandler({ type: 'redis', initialize });
+CacheHandler.initializeHandler({
+  handlers: [
+    { type: 'redis', initialize: redisInitialize },
+  ],
+});
 
 export default CacheHandler;
 ```
 
-### GCS
+## GCS
 ### GCS 설치
 ```sh
 npm install @google-cloud/storage
@@ -116,7 +117,7 @@ npm install @google-cloud/storage
 import { CacheHandler } from 'next-payload-hanlder';
 import { Storage } from '@google-cloud/storage';
 
-const initialize = async () => {
+const gcsInitialize = async () => {
   const storage = new Storage({
     projectId: process.env.GCP_PROJECT_ID, // GCP 프로젝트 ID
     keyFilename: process.env.GCS_SERVICE_ACCOUNT_KEY // GCS 서비스 계정 키 파일 경로
@@ -128,13 +129,11 @@ const initialize = async () => {
   return bucket;
 };
 
-CacheHandler.initializeHandler(
-  { 
-    type: 'gcs', 
-    initialize, 
-    options: { bucketPrefix: process.env.GCS_BUCKET_PREFIX } // GCS 버킷 폴더 (optional)
-  }
-);
+CacheHandler.initializeHandler({
+  handlers: [
+    { type: 'gcs', initialize: gcsInitialize },
+  ],
+});
 
 export default CacheHandler;
 ```
@@ -146,7 +145,7 @@ import { patchFetch } from 'next-payload-handler';
 patchFetch('/api/post', {
   ...,
   method: 'GET',
-  next: { cacheKey: 'custom-key' },
+  next: { cacheKey: 'custom-key', handlerType: 'redis' },
 });
 ```
 
