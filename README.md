@@ -14,11 +14,10 @@ npm install next-payload-handler
 - **멀티 핸들러 지원**
   - Redis, GCS 등 다양한 핸들러를 동시에 등록하여 사용할 수 있으며, 각 요청별로 사용할 핸들러를 선택
 - **커스텀 키 지원**
-  - patchFetch 함수를 이용해 cacheKey 옵션을 활용하여 캐시 키를 커스텀 가능. 
+  - patchFetch 함수를 이용해 cacheKey 옵션을 활용하여 캐시 키를 커스텀 가능.
   - Next.js 서버가 아닌 백엔드/BFF 서버에서도 Next.js의 캐시를 핸들링할 수 있습니다.
 
-## 사용법
-### next config 설정
+## next config 설정
 ```ts
 // next.config.js
 const nextConfig = {
@@ -33,7 +32,7 @@ module.exports = nextConfig;
 
 `initializeHandler` 메서드는 다양한 핸들러를 동시에 초기화할 수 있으며, 필요에 따라 특정 핸들러를 선택하여 사용할 수 있습니다.
 
-### handlers
+### [handlers](#redis-client-예제)
 **Type:** `Array` (최소 1개 필수)  
 각 핸들러 객체는 다음 속성을 포함함:
 - **type** (`redis` | `gcs`)
@@ -47,35 +46,64 @@ module.exports = nextConfig;
 
 ### defaultHandler
 **Type:** `'redis' | 'gcs'`  
-**Default:** `'redis'`  
-기본적으로 사용할 핸들러를 지정
+**Default:** `'redis'`
+- 기본적으로 사용할 핸들러를 지정
 
 ### cacheOptions
 **Type:** `object` (선택사항)
 - **namespace** (`string`)
   - 캐시 키 네임스페이스를 지정하여 키 충돌 방지
+  - `${namespace}:${cacheKey}` 형태로 캐시 키 저장
 
 ## 예제
 ```ts
 CacheHandler.initializeHandler({
   handlers: [
     { type: 'redis', initialize: redisInitialize },
-    { type: 'gcs', initialize: gcsInitialize, options: { bucketPrefix:  process.env.GCS_BUCKET_PREFIX } },
+    { type: 'gcs', initialize: gcsInitialize, 
+      options: { 
+        bucketPrefix: 'next-cache-bucket'
+      } 
+    },
   ],
   defaultHandler: 'redis',
   cacheOptions: {
-    namespace:  process.env.NAMESPACE, 
+    namespace: 'service-A', 
   }
 });
 ```
 
-## redis
-### redis 설치
+## Next fetch 확장
+```ts
+import { patchFetch } from 'next-payload-handler';
+
+patchFetch('/api/post', {
+  ...,
+  method: 'GET',
+  next: { 
+    cacheKey: 'custom-key', 
+    handlerType: 'redis', 
+    tags: ['post'],
+    revalidate: 3600,
+  },
+});
+```
+
+## 캐시 키 관리 (BFF/백엔드에서 캐시 삭제)
+```ts
+const namespace = 'my-namespace'; // 네임스페이스 (없을 경우 생략 가능)
+const key = JSON.stringify(namespace ? [`${namespace}:custom-key`] : ['custom-key']);
+
+redisHandler.del(key);
+```
+
+## Redis Client 예제
+### Redis 설치
 ```sh
 npm install redis
 ```
 
-### redis 연결
+### Redis 연결
 ```ts
 // ./cache-handler.mjs
 import { CacheHandler } from 'next-payload-hanlder';
@@ -105,7 +133,7 @@ CacheHandler.initializeHandler({
 export default CacheHandler;
 ```
 
-## GCS
+## GCS Bucket 예제
 ### GCS 설치
 ```sh
 npm install @google-cloud/storage
@@ -136,23 +164,4 @@ CacheHandler.initializeHandler({
 });
 
 export default CacheHandler;
-```
-
-### 캐시 키 설정
-```ts
-import { patchFetch } from 'next-payload-handler';
-
-patchFetch('/api/post', {
-  ...,
-  method: 'GET',
-  next: { cacheKey: 'custom-key', handlerType: 'redis' },
-});
-```
-
-### 캐시 키 관리 (BFF/백엔드에서 캐시 삭제)
-```ts
-const namespace = 'my-namespace'; // 네임스페이스 (없을 경우 생략 가능)
-const key = JSON.stringify(namespace ? [`${namespace}:custom-key`] : ['custom-key']);
-
-customHandler.del(key);
 ```
