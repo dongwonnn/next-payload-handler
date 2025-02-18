@@ -18,6 +18,7 @@ export class CacheHandler {
   static #handlers: Map<HandlerType, HandlerInstanceType> = new Map();
   static #initializationPromise: Promise<void> | null = null;
   static #defaultHandler: HandlerType = DEFAULT_HANDLER;
+  static #namespace?: string;
 
   static readonly #handlerCreators: {
     [T in HandlerType]: (client: ClientType<T>, options?: HandlerOptionsType<T>) => HandlerInstanceType<T>;
@@ -37,7 +38,7 @@ export class CacheHandler {
       options?: HandlerOptionsType;
     }[];
     defaultHandler?: HandlerType;
-    cacheOptions: CacheOptionsType;
+    cacheOptions?: CacheOptionsType;
   }): Promise<void> {
     if (CacheHandler.#initializationPromise) {
       await CacheHandler.#initializationPromise;
@@ -45,6 +46,7 @@ export class CacheHandler {
     }
 
     CacheHandler.#defaultHandler = defaultHandler ?? DEFAULT_HANDLER;
+    CacheHandler.#namespace = cacheOptions?.namespace;
 
     CacheHandler.#initializationPromise = (async () => {
       const results = await Promise.allSettled(
@@ -94,7 +96,9 @@ export class CacheHandler {
     const targetHandlerType = handlerType ?? CacheHandler.#defaultHandler;
     const targetHandler = CacheHandler.getHandler(targetHandlerType);
 
-    const key = cacheKey ?? nextKey;
+    const defaultKey = cacheKey ?? nextKey;
+    const key = [CacheHandler.#namespace, defaultKey].filter(Boolean).join(':');
+
     const cacheData = await targetHandler.get(key);
     if (!cacheData) return null;
 
@@ -122,7 +126,9 @@ export class CacheHandler {
     const targetHandlerType = handlerType ?? CacheHandler.#defaultHandler;
     const targetHandler = CacheHandler.getHandler(targetHandlerType);
 
-    const key = cacheKey ?? nextKey;
+    const defaultKey = cacheKey ?? nextKey;
+    const key = [CacheHandler.#namespace, defaultKey].filter(Boolean).join(':');
+
     await targetHandler.set(key, value, ctx);
   }
 }
