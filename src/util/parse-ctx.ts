@@ -1,8 +1,8 @@
-import type { CacheHandlerParametersSet } from '../type';
+import type { CacheHandlerParametersSet, HandlerType } from '../type';
 
 type TypeCacheMetadata = {
-  cacheKey: string | null;
-  handlerType: string | null;
+  cacheKey?: string;
+  handlerType?: HandlerType;
 };
 
 function isBase64(str: string) {
@@ -17,7 +17,7 @@ export function extractCacheMetadata(ctx: CacheHandlerParametersSet[2]) {
   const [firstTag, ...remainingTags] = tags;
 
   if (!firstTag || !isBase64(firstTag)) {
-    return { cacheKey: null, handlerType: null, ctx };
+    return { ctx };
   }
   ``;
 
@@ -25,8 +25,8 @@ export function extractCacheMetadata(ctx: CacheHandlerParametersSet[2]) {
   const { cacheKey, handlerType }: TypeCacheMetadata = JSON.parse(decoded) || {};
 
   return {
-    cacheKey: cacheKey ?? null,
-    handlerType: handlerType ?? null,
+    cacheKey,
+    handlerType,
     ctx: { ...ctx, tags: remainingTags },
   };
 }
