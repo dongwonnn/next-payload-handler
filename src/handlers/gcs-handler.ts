@@ -12,13 +12,11 @@ import type {
 
 export class GCSHandler implements Handler {
   readonly #bucket: Bucket;
-  readonly #cacheNamespace?: string;
   readonly #bucketPrefix?: string;
 
-  constructor(bucket: Bucket, options?: HandlerOptionsType) {
+  constructor(bucket: Bucket, options?: HandlerOptionsType<'gcs'>) {
     this.#bucket = bucket;
     this.#bucketPrefix = options?.bucketPrefix;
-    this.#cacheNamespace = options?.cacheNamespace;
   }
 
   getBucketFile(fileName: string) {
@@ -26,9 +24,8 @@ export class GCSHandler implements Handler {
     return this.#bucket.file(filePath);
   }
 
-  async get(key: CacheHandlerParametersGet[0], ctx: CacheHandlerParametersGet[1]): Promise<CacheHandlerValue | null> {
-    const fileName = `${this.#cacheNamespace}:${key}`;
-    const bucketFile = this.getBucketFile(fileName);
+  async get(key: CacheHandlerParametersGet[0]): Promise<CacheHandlerValue | null> {
+    const bucketFile = this.getBucketFile(key);
 
     try {
       const [contents] = await bucketFile.download();
@@ -47,8 +44,7 @@ export class GCSHandler implements Handler {
     value: CacheHandlerParametersSet[1],
     ctx: CacheHandlerParametersSet[2],
   ): Promise<void> {
-    const fileName = `${this.#cacheNamespace}:${key}`;
-    const bucketFile = this.getBucketFile(fileName);
+    const bucketFile = this.getBucketFile(key);
 
     const cacheData = {
       value,

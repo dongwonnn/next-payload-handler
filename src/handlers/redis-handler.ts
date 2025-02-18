@@ -1,26 +1,17 @@
 import { Handler } from '../interface/handler-interface';
 
-import type {
-  RedisClientType,
-  CacheHandlerParametersGet,
-  CacheHandlerParametersSet,
-  CacheHandlerValue,
-  HandlerOptionsType,
-} from '../type';
+import type { RedisClientType, CacheHandlerParametersGet, CacheHandlerParametersSet, CacheHandlerValue } from '../type';
 
 export class RedisHandler implements Handler {
   readonly #client: RedisClientType;
-  readonly #cacheNamespace?: string;
 
-  constructor(client: RedisClientType, options?: HandlerOptionsType) {
+  constructor(client: RedisClientType) {
     this.#client = client;
-    this.#cacheNamespace = options?.cacheNamespace;
   }
 
-  async get(key: CacheHandlerParametersGet[0], ctx: CacheHandlerParametersGet[1]): Promise<CacheHandlerValue | null> {
-    const redisKey = `${this.#cacheNamespace}:${key}`;
+  async get(key: CacheHandlerParametersGet[0]): Promise<CacheHandlerValue | null> {
     try {
-      const cachedValue = await this.#client.get(redisKey);
+      const cachedValue = await this.#client.get(key);
       return cachedValue ? JSON.parse(cachedValue) : null;
     } catch (error) {
       console.error('Error fetching from Redis:', error);
@@ -33,7 +24,6 @@ export class RedisHandler implements Handler {
     value: CacheHandlerParametersSet[1],
     ctx: CacheHandlerParametersSet[2],
   ): Promise<void> {
-    const redisKey = `${this.#cacheNamespace}:${key}`;
     const cacheData = {
       value,
       lastModified: Date.now(),
@@ -41,7 +31,7 @@ export class RedisHandler implements Handler {
     };
 
     try {
-      await this.#client.set(redisKey, JSON.stringify(cacheData));
+      await this.#client.set(key, JSON.stringify(cacheData));
     } catch (error) {
       console.error('Error setting value in Redis:', error);
     }
