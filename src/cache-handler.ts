@@ -13,12 +13,14 @@ import {
 } from './type';
 
 const DEFAULT_HANDLER = 'redis';
+const DEFAULT_CACHE_MAX_SIZE = 2;
 
 export class CacheHandler {
   static #handlers: Map<HandlerType, HandlerInstanceType> = new Map();
   static #initializationPromise: Promise<void> | null = null;
   static #defaultHandler: HandlerType = DEFAULT_HANDLER;
   static #namespace?: string;
+  static #cacheMaxSize: number = DEFAULT_CACHE_MAX_SIZE;
 
   static readonly #handlerCreators: {
     [T in HandlerType]: (client: ClientType<T>, options?: HandlerOptionsType<T>) => HandlerInstanceType<T>;
@@ -47,6 +49,7 @@ export class CacheHandler {
 
     CacheHandler.#defaultHandler = defaultHandler ?? DEFAULT_HANDLER;
     CacheHandler.#namespace = cacheOptions?.namespace;
+    CacheHandler.#cacheMaxSize = cacheOptions?.cacheMaxSize ?? DEFAULT_CACHE_MAX_SIZE;
 
     CacheHandler.#initializationPromise = (async () => {
       const results = await Promise.allSettled(
@@ -125,6 +128,14 @@ export class CacheHandler {
     const { cacheKey, handlerType, ctx } = extractCacheMetadata(rawCtx);
     const targetHandlerType = handlerType ?? CacheHandler.#defaultHandler;
     const targetHandler = CacheHandler.getHandler(targetHandlerType);
+
+    const valueSize = JSON.stringify(value).length;
+    if (ctx.fetchCache && valueSize > CacheHandler.#cacheMaxSize * 1024 * 1024) {
+      throw new Error(
+        `Failed to set Next.js data cache, items over ${CacheHandler.#cacheMaxSize} can not be cached (${valueSize} bytes). ` +
+          `To increase the cache limit, check the README: https://github.com/dongwonnn/next-payload-handler?tab=readme-ov-file#cacheoptions`,
+      );
+    }
 
     const defaultKey = cacheKey ?? nextKey;
     const key = [CacheHandler.#namespace, defaultKey].filter(Boolean).join(':');

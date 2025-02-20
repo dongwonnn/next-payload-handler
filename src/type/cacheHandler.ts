@@ -31,5 +31,5 @@ export type HandlerOptionsType<T extends HandlerType = HandlerType> = HandlerTyp
 
 export type CacheOptionsType = {
   namespace?: string;
-  maxCacheSize?: number;
+  cacheMaxSize?: number;
 };
