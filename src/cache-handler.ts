@@ -130,11 +130,15 @@ export class CacheHandler {
     const targetHandler = CacheHandler.getHandler(targetHandlerType);
 
     const valueSize = JSON.stringify(value).length;
-    if (ctx.fetchCache && valueSize > CacheHandler.#cacheMaxSize * 1024 * 1024) {
-      throw new Error(
-        `Failed to set Next.js data cache, items over ${CacheHandler.#cacheMaxSize} can not be cached (${valueSize} bytes). ` +
-          `To increase the cache limit, check the README: https://github.com/dongwonnn/next-payload-handler?tab=readme-ov-file#cacheoptions`,
-      );
+
+    if (ctx.fetchCache && valueSize > CacheHandler.#cacheMaxSize) {
+      if (process.env.NODE_ENV !== 'production') {
+        throw new Error(
+          `\nFailed to set Next.js data cache, items over ${CacheHandler.#cacheMaxSize} can not be cached (${valueSize} bytes). ` +
+            `To increase the cache limit, check the README: https://github.com/dongwonnn/next-payload-handler?tab=readme-ov-file#cacheoptions`,
+        );
+      }
+      return;
     }
 
     const defaultKey = cacheKey ?? nextKey;
