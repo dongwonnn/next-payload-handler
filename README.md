@@ -39,21 +39,31 @@ module.exports = nextConfig;
   - 핸들러의 타입을 지정 (`'redis'`, `'gcs'`)
 - **initialize** (`function`)
   - 핸들러를 생성하고 반환하는 비동기 함수
-- **options** (`object`, 선택사항)
+- **options** 
+  - **Type:** `object` ( optional )
   - 핸들러별 설정 값
-  - **bucketPrefix** (`string`)
+  - **bucketPrefix** 
+    - **Type:** ``string``
     - GCS 사용 시, 버킷 내 기본 저장 경로 지정
 
 ### defaultHandler
 **Type:** `'redis' | 'gcs'`  
 **Default:** `'redis'`
 - 기본적으로 사용할 핸들러를 지정
+- [patch-fetch](https://github.com/dongwonnn/next-payload-handler/blob/7289a34c642c9bb44afeeb92acff0622db636ece/README.md#next-fetch-%ED%99%95%EC%9E%A5) 함수에서 `defaultHandler` 생략 가능
 
 ### cacheOptions
-**Type:** `object` (선택사항)
-- **namespace** (`string`)
+**Type:** `object` ( optional )
+- **namespace**
+  - **Type:** `string`
   - 캐시 키 네임스페이스를 지정하여 키 충돌 방지
   - `${namespace}:${cacheKey}` 형태로 캐시 키 저장
+- **cacheMaxSize** 
+  - **Type:** `number`
+  - **Default:** `2` (MB)
+  - 캐시 데이터의 최대 크기 (단위: MB).
+  - 기본값은 2MB, 초과 시 캐싱 생략
+
 
 ## 예제
 ```ts
@@ -68,7 +78,8 @@ CacheHandler.initializeHandler({
   ],
   defaultHandler: 'redis',
   cacheOptions: {
-    namespace: 'service-A', 
+    namespace: 'service-A',
+    cacheMaxSize: '2',
   }
 });
 ```
