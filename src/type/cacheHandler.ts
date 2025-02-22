@@ -4,8 +4,6 @@ export type { GCSHandler, RedisHandler };
 
 export type CacheHandlerParametersGet = Parameters<CacheHandler['get']>;
 export type CacheHandlerParametersSet = Parameters<CacheHandler['set']>;
-export type CacheHandlerCtxTags = CacheHandlerParametersGet[1]['tags'] | CacheHandlerParametersSet[2]['tags'];
-export type CacheHandlerKey = CacheHandlerParametersGet[0] | CacheHandlerParametersSet[0];
 
 type HandlerTypeToClient = {
   redis: RedisClientType;

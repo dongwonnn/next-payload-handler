@@ -1,10 +1,4 @@
-import type {
-  CacheHandlerCtxTags,
-  CacheHandlerKey,
-  CacheHandlerParametersGet,
-  CacheHandlerParametersSet,
-  CacheHandlerValue,
-} from '../type';
+import type { CacheHandlerParametersGet, CacheHandlerParametersSet, CacheHandlerValue } from '../type';
 
 export interface Handler {
   get(key: CacheHandlerParametersGet[0], ctx: CacheHandlerParametersGet[1]): Promise<CacheHandlerValue | null>;
