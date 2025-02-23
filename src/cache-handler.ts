@@ -2,25 +2,29 @@ import { RedisHandler, GCSHandler } from './handlers';
 import { extractCacheMetadata } from './util/parse-ctx';
 
 import {
-  CacheHandlerParametersGet,
-  CacheHandlerParametersSet,
-  CacheHandlerValue,
   HandlerType,
-  ClientType,
   HandlerInstanceType,
   HandlerOptionsType,
+  ClientType,
   CacheOptionsType,
+  CacheHandlerValue,
+  CacheHandler as NextCacheHandler,
+  CacheHandlerParametersGet,
+  CacheHandlerParametersSet,
+  CacheHandlerParametersRevalidateTag,
+  TagsManifestType,
 } from './type';
 
 const DEFAULT_HANDLER = 'redis';
 const DEFAULT_CACHE_MAX_SIZE = 2;
 
-export class CacheHandler {
+export class CacheHandler implements NextCacheHandler {
   static #handlers: Map<HandlerType, HandlerInstanceType> = new Map();
   static #initializationPromise: Promise<void> | null = null;
   static #defaultHandler: HandlerType = DEFAULT_HANDLER;
   static #namespace?: string;
   static #cacheMaxSize: number = DEFAULT_CACHE_MAX_SIZE;
+  static #tagsManifest: TagsManifestType = { items: {} };
 
   static readonly #handlerCreators: {
     [T in HandlerType]: (client: ClientType<T>, options?: HandlerOptionsType<T>) => HandlerInstanceType<T>;
@@ -146,4 +150,19 @@ export class CacheHandler {
 
     await targetHandler.set(key, value, ctx);
   }
+
+  async revalidateTag(...args: CacheHandlerParametersRevalidateTag): Promise<void> {
+    await CacheHandler.#initializationPromise;
+    const tags = typeof args[0] === 'string' ? [args[0]] : args[0];
+    if (tags.length === 0) return;
+
+    CacheHandler.#tagsManifest.items = {
+      ...CacheHandler.#tagsManifest.items,
+      ...Object.fromEntries(
+        tags.map((tag) => [tag, { revalidatedAt: Date.now(), ...(CacheHandler.#tagsManifest.items[tag] || {}) }]),
+      ),
+    };
+  }
+
+  resetRequestCache() {}
 }

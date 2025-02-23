@@ -4,6 +4,7 @@ export type { GCSHandler, RedisHandler };
 
 export type CacheHandlerParametersGet = Parameters<CacheHandler['get']>;
 export type CacheHandlerParametersSet = Parameters<CacheHandler['set']>;
+export type CacheHandlerParametersRevalidateTag = Parameters<CacheHandler['revalidateTag']>;
 
 type HandlerTypeToClient = {
   redis: RedisClientType;
@@ -30,4 +31,8 @@ export type HandlerOptionsType<T extends HandlerType = HandlerType> = HandlerTyp
 export type CacheOptionsType = {
   namespace?: string;
   cacheMaxSize?: number;
+};
+
+export type TagsManifestType = {
+  items: { [tag: string]: { revalidatedAt?: number | Date } };
 };
