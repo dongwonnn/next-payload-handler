@@ -131,7 +131,7 @@ export class CacheHandler {
 
     const valueSize = JSON.stringify(value).length;
 
-    if (ctx.fetchCache && valueSize > CacheHandler.#cacheMaxSize) {
+    if (ctx.fetchCache && valueSize > CacheHandler.#cacheMaxSize * 1024 * 1024) {
       if (process.env.NODE_ENV !== 'production') {
         throw new Error(
           `\nFailed to set Next.js data cache, items over ${CacheHandler.#cacheMaxSize} can not be cached (${valueSize} bytes). ` +
