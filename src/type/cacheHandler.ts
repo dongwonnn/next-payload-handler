@@ -34,5 +34,5 @@ export type CacheOptionsType = {
 };
 
 export type TagsManifestType = {
-  items: { [tag: string]: { revalidatedAt?: number | Date } };
+  items: { [tag: string]: { revalidatedAt?: number } };
 };
