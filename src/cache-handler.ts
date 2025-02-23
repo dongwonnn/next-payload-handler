@@ -98,8 +98,7 @@ export class CacheHandler implements NextCacheHandler {
     rawCtx: CacheHandlerParametersGet[1],
   ): Promise<CacheHandlerValue | null> {
     await CacheHandler.#initializationPromise;
-
-    const { cacheKey, handlerType } = extractCacheMetadata(rawCtx);
+    const { cacheKey, handlerType, ctx } = extractCacheMetadata(rawCtx);
     const targetHandlerType = handlerType ?? CacheHandler.#defaultHandler;
     const targetHandler = CacheHandler.getHandler(targetHandlerType);
 
@@ -117,6 +116,24 @@ export class CacheHandler implements NextCacheHandler {
       const cacheAge = Math.floor((now - (lastModified || now)) / 1000);
 
       if (cacheAge >= value.revalidate) return null;
+
+      if (!ctx.tags || ctx.tags.length === 0) {
+        return cacheData;
+      }
+
+      const latestRevalidateAt = ctx.tags.reduce((max, tag) => {
+        const revalidatedAt = CacheHandler.#tagsManifest.items[tag]?.revalidatedAt ?? 0;
+
+        if (revalidatedAt > 0) {
+          delete CacheHandler.#tagsManifest.items[tag];
+        }
+
+        return Math.max(max, revalidatedAt);
+      }, 0);
+
+      if (latestRevalidateAt >= (lastModified || now)) {
+        return null;
+      }
     }
 
     return cacheData;
