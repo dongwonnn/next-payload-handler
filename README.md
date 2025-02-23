@@ -1,23 +1,27 @@
 # next-payload-handler &middot; [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-`next-payload-handler`는 **Next.js의 payload cache를 외부 저장소( Redis, Storage )에 저장하고 관리할 수 있는 라이브러리**입니다.  
-Next.js의 캐시 키를 커스텀해 설정하고, 이를 Next.js 서버뿐만 아니라 **백엔드/BFF 서버에서도 핸들링할 수 있도록** 도와줍니다.
+`next-payload-handler`는 Next.js의 **데이터 캐시를 외부 저장소(예: Redis, GCS)에 저장하고 관리할 수 있도록 지원하는 라이브러리**입니다.
 
-## 설치
+Next.js의 **캐시 키를 직접 설정**할 수 있으며, 이를 Next.js 서버뿐만 아니라 **백엔드/BFF 서버에서도 활용**할 수 있도록 도와줍니다.
+
+## 특징
+### 분산 환경에서 일관된 데이터 캐시 유지
+  - Next.js의 데이터 캐시를 서버 내부가 아닌 외부 저장소에 저장하여, **분산 환경에서도 일관된 캐싱**을 유지할 수 있습니다.
+### 멀티 핸들러 지원
+  - Redis, GCS 등 다양한 핸들러를 동시에 등록하여 사용할 수 있으며, 각 **요청별로 저장할 저장소를 선택**할 수 있습니다.
+### 커스텀 키 지원
+  - 데이터 fetch 시 **커스텀 캐시 키를 설정**하여, Next.js 서버뿐만 아니라 **백엔드/BFF 서버에서도 캐시를 관리할 수 있도록 지원**합니다.
+### Next.js의 기본 캐시 기능(revalidateTag)과 함께 사용 가능
+  - Next.js의 `revalidateTag` 기능을 그대로 활용할 수 있으며, 추가적인 캐시 관리 기능을 제공하여 기존 Next.js의 캐시 인프라를 확장할 수 있습니다.
+
+## 사용
+
+### 설치
 ```sh
 npm install next-payload-handler
 ```
 
-## 특징
-- **Next.js의 payload cache를 외부 저장소에 저장**
-  - Next.js의 **fetch cache key 및 payload 데이터를 외부 저장소에 저장**하여, **분산 환경에서도 일관된 캐싱**을 유지
-- **멀티 핸들러 지원**
-  - Redis, GCS 등 다양한 핸들러를 동시에 등록하여 사용할 수 있으며, 각 요청별로 사용할 핸들러를 선택
-- **커스텀 키 지원**
-  - patchFetch 함수를 이용해 cacheKey 옵션을 활용하여 캐시 키를 커스텀 가능.
-  - Next.js 서버가 아닌 백엔드/BFF 서버에서도 Next.js의 캐시를 핸들링할 수 있습니다.
-
-## next config 설정
+### Custom Cache Handler 설정
 ```ts
 // next.config.js
 const nextConfig = {
@@ -28,8 +32,8 @@ const nextConfig = {
 module.exports = nextConfig;
 ```
 
-## initializeHandler 메서드
-
+### CacheHandler 초기화
+#### initializeHandler
 `initializeHandler` 메서드는 다양한 핸들러를 동시에 초기화할 수 있으며, 필요에 따라 특정 핸들러를 선택하여 사용할 수 있습니다.
 
 ### [handlers](#redis-client-예제)
@@ -64,8 +68,7 @@ module.exports = nextConfig;
   - 캐시 데이터의 최대 크기 (단위: MB).
   - 기본값은 2MB, 초과 시 캐싱 생략
 
-
-## 예제
+#### 예제
 ```ts
 CacheHandler.initializeHandler({
   handlers: [
@@ -84,37 +87,57 @@ CacheHandler.initializeHandler({
 });
 ```
 
-## Next fetch 확장
+### Next fetch 확장
+- `patchFetch`를 활용하면 `cacheKey`를 직접 지정하여 관리할 수 있으며, 원하는 핸들러(`redis`, `gcs` 등)를 선택할 수 있습니다.
+- `tags` 옵션을 활용하면 **Next.js의 기본 `revalidateTag` 기능을 사용할 수 있으며**, 필요 시 `revalidateTag`를 호출하여 데이터를 갱신할 수 있습니다.
+
 ```ts
 import { patchFetch } from 'next-payload-handler';
 
 patchFetch('/api/post', {
   ...,
   method: 'GET',
-  next: { 
-    cacheKey: 'custom-key', 
-    handlerType: 'redis', 
-    tags: ['post'],
-    revalidate: 3600,
+  next: {
+    cacheKey: 'custom-key', // 커스텀 캐시 키 지정
+    handlerType: 'redis',   // Redis에 캐시 저장 ( defaultHandler 옵션 지정 시 생략 가능 )
+    tags: ['post'],         // Next.js의 revalidateTag 기능과 함께 사용 가능
+    revalidate: 3600,       // revalidate time 설정
   },
 });
 ```
 
-## 캐시 키 관리 (BFF/백엔드에서 캐시 삭제)
+## 캐시 키 관리 
+### BFF/백엔드에서 캐시 삭제
 ```ts
 const namespace = 'my-namespace'; // 네임스페이스 (없을 경우 생략 가능)
 const key = JSON.stringify(namespace ? [`${namespace}:custom-key`] : ['custom-key']);
 
 redisHandler.del(key);
 ```
+📌 참고: namespace가 없을 경우, custom-key만 사용하여 캐시를 관리합니다.
+이를 활용하면 여러 서비스가 같은 Redis를 사용할 때 키 충돌을 방지할 수 있습니다.
 
-## Redis Client 예제
-### Redis 설치
+### Next.js의 revalidateTag 사용
+- Next.js의 revalidateTag를 활용하여 특정 태그에 해당하는 데이터를 갱신할 수 있습니다.
+- fetch 요청 시 tags 옵션을 추가하면, 해당 태그가 revalidate될 때 자동으로 새로운 데이터를 가져옵니다.
+
+```ts
+import { revalidateTag } from 'next/cache';
+
+const updatePost = () => {
+...,
+  revalidateTag('post'); // 'post' 태그에 해당하는 캐시 무효화
+};
+```
+
+## handler 설정
+### 1. Redis Handler
+#### Redis 설치
 ```sh
 npm install redis
 ```
 
-### Redis 연결
+#### Redis 연결
 ```ts
 // ./cache-handler.mjs
 import { CacheHandler } from 'next-payload-hanlder';
@@ -144,13 +167,13 @@ CacheHandler.initializeHandler({
 export default CacheHandler;
 ```
 
-## GCS Bucket 예제
-### GCS 설치
+### 2. GCS Handler
+#### GCS 설치
 ```sh
 npm install @google-cloud/storage
 ```
 
-### GCS 연결
+#### GCS 연결
 ```ts
 // ./cache-handler.mjs
 import { CacheHandler } from 'next-payload-hanlder';
