@@ -82,6 +82,34 @@ export class CacheHandler implements NextCacheHandler {
     return CacheHandler.#initializationPromise;
   }
 
+  static shouldInvalidateCache(cacheData: CacheHandlerValue, tags?: string[]) {
+    const { value, lastModified } = cacheData;
+
+    if (value?.kind !== 'FETCH') return false;
+    if (value.revalidate === 0) return true;
+
+    const now = Date.now();
+    const cacheAge = Math.floor((now - (lastModified || now)) / 1000);
+    if (cacheAge >= value.revalidate) return true;
+
+    if (!tags || tags.length === 0) return false;
+
+    const latestRevalidateAt = CacheHandler.getLatestRevalidateAt(tags);
+    return latestRevalidateAt >= (lastModified || now);
+  }
+
+  static getLatestRevalidateAt(tags: string[]) {
+    return tags.reduce((max, tag) => {
+      const revalidatedAt = CacheHandler.#tagsManifest.items[tag]?.revalidatedAt ?? 0;
+
+      if (revalidatedAt > 0) {
+        delete CacheHandler.#tagsManifest.items[tag];
+      }
+
+      return Math.max(max, revalidatedAt);
+    }, 0);
+  }
+
   static getHandler<T extends HandlerType>(type: T): HandlerInstanceType<T> {
     const handlerType = type ?? CacheHandler.#defaultHandler;
     const handler = CacheHandler.#handlers.get(handlerType);
@@ -98,6 +126,7 @@ export class CacheHandler implements NextCacheHandler {
     rawCtx: CacheHandlerParametersGet[1],
   ): Promise<CacheHandlerValue | null> {
     await CacheHandler.#initializationPromise;
+
     const { cacheKey, handlerType, ctx } = extractCacheMetadata(rawCtx);
     const targetHandlerType = handlerType ?? CacheHandler.#defaultHandler;
     const targetHandler = CacheHandler.getHandler(targetHandlerType);
@@ -108,32 +137,8 @@ export class CacheHandler implements NextCacheHandler {
     const cacheData = await targetHandler.get(key);
     if (!cacheData) return null;
 
-    const { value, lastModified } = cacheData;
-    if (value?.kind === 'FETCH') {
-      if (value.revalidate === 0) return null;
-
-      const now = Date.now();
-      const cacheAge = Math.floor((now - (lastModified || now)) / 1000);
-
-      if (cacheAge >= value.revalidate) return null;
-
-      if (!ctx.tags || ctx.tags.length === 0) {
-        return cacheData;
-      }
-
-      const latestRevalidateAt = ctx.tags.reduce((max, tag) => {
-        const revalidatedAt = CacheHandler.#tagsManifest.items[tag]?.revalidatedAt ?? 0;
-
-        if (revalidatedAt > 0) {
-          delete CacheHandler.#tagsManifest.items[tag];
-        }
-
-        return Math.max(max, revalidatedAt);
-      }, 0);
-
-      if (latestRevalidateAt >= (lastModified || now)) {
-        return null;
-      }
+    if (CacheHandler.shouldInvalidateCache(cacheData, ctx.tags)) {
+      return null;
     }
 
     return cacheData;
