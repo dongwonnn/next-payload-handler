@@ -36,7 +36,7 @@ module.exports = nextConfig;
 #### initializeHandler
 `initializeHandler` 메서드는 다양한 핸들러를 동시에 초기화할 수 있으며, 필요에 따라 특정 핸들러를 선택하여 사용할 수 있습니다.
 
-### [handlers](#redis-client-예제)
+### [handlers](https://github.com/dongwonnn/next-payload-handler?tab=readme-ov-file#handler-%EC%84%A4%EC%A0%95)
 **Type:** `Array` (최소 1개 필수)  
 각 핸들러 객체는 다음 속성을 포함함:
 - **type** (`redis` | `gcs`)
@@ -54,7 +54,7 @@ module.exports = nextConfig;
 **Type:** `'redis' | 'gcs'`  
 **Default:** `'redis'`
 - 기본적으로 사용할 핸들러를 지정
-- [patch-fetch](https://github.com/dongwonnn/next-payload-handler/blob/7289a34c642c9bb44afeeb92acff0622db636ece/README.md#next-fetch-%ED%99%95%EC%9E%A5) 함수에서 `defaultHandler` 생략 가능
+- [patch-fetch](https://github.com/dongwonnn/next-payload-handler?tab=readme-ov-file#next-fetch-%ED%99%95%EC%9E%A5) 함수에서 `defaultHandler` 생략 가능
 
 ### cacheOptions
 **Type:** `object` ( optional )
