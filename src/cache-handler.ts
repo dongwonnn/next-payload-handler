@@ -13,15 +13,19 @@ import {
   CacheHandlerParametersSet,
   CacheHandlerParametersRevalidateTag,
   TagsManifestType,
+  FileSystemCacheContext,
 } from './type';
 
 const DEFAULT_HANDLER = 'redis';
 const DEFAULT_CACHE_MAX_SIZE = 2;
 
 export class CacheHandler implements NextCacheHandler {
+  static #context: FileSystemCacheContext;
+
   static #handlers: Map<HandlerType, HandlerInstanceType> = new Map();
-  static #initializationPromise: Promise<void> | null = null;
   static #defaultHandler: HandlerType = DEFAULT_HANDLER;
+  static #initializationPromise: Promise<void> | null = null;
+
   static #namespace?: string;
   static #cacheMaxSize: number = DEFAULT_CACHE_MAX_SIZE;
   static #tagsManifest: TagsManifestType = { items: {} };
@@ -33,7 +37,12 @@ export class CacheHandler implements NextCacheHandler {
     gcs: (client, options) => new GCSHandler(client, options),
   };
 
-  static async initializeHandler<T extends HandlerType>({
+  // Internal Next.js config
+  constructor(context: FileSystemCacheContext) {
+    CacheHandler.#context = context;
+  }
+
+  async initializeHandler<T extends HandlerType>({
     handlers,
     defaultHandler,
     cacheOptions,
@@ -158,7 +167,7 @@ export class CacheHandler implements NextCacheHandler {
     const valueSize = JSON.stringify(value).length;
 
     if (ctx.fetchCache && valueSize > CacheHandler.#cacheMaxSize * 1024 * 1024) {
-      if (process.env.NODE_ENV !== 'production') {
+      if (CacheHandler.#context.dev) {
         throw new Error(
           `\nFailed to set Next.js data cache, items over ${CacheHandler.#cacheMaxSize} can not be cached (${valueSize} bytes). ` +
             `To increase the cache limit, check the README: https://github.com/dongwonnn/next-payload-handler?tab=readme-ov-file#cacheoptions`,
@@ -186,5 +195,7 @@ export class CacheHandler implements NextCacheHandler {
     };
   }
 
-  resetRequestCache() {}
+  resetRequestCache() {
+    // Not supported yet
+  }
 }
