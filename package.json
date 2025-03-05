@@ -1,13 +1,13 @@
 {
   "name": "next-payload-handler",
   "version": "0.3.5",
-  "description": "Custom handling of Next.js RSC payloads.",
+  "description": "Custom handling of Next.js Data Cache.",
   "keywords": [
-    "next",
-    "ISR",
-    "cache key",
-    "cache invalidate",
-    "payload"
+    "next cacheHandler",
+    "data cache",
+    "cache synchronization",
+    "multi Instance",
+    "custom cache key"
   ],
   "homepage": "https://github.com/dongwonnn/next-payload-handler#readme",
   "bugs": {
@@ -48,7 +48,8 @@
   "scripts": {
     "build": "tsup",
     "watch": "tsup --watch",
-    "test": "vitest"
+    "test": "vitest",
+    "test:watch": "vitest -w"
   },
   "devDependencies": {
     "@eslint/js": "^9.11.1",
