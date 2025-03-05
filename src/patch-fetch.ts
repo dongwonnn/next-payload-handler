@@ -3,12 +3,11 @@ export function patchFetch(input: RequestInfo | URL, init: RequestInit = {}) {
     return fetch(input, init);
   }
 
-  const { cacheKey, handlerType, tags } = init.next;
-  const existingTags = Array.isArray(tags) ? tags : [];
+  const { cacheKey, handlerType, tags = [] } = init.next;
 
   const metaData =
     cacheKey || handlerType ? Buffer.from(JSON.stringify({ cacheKey, handlerType })).toString('base64') : null;
-  const modifiedTags = metaData ? [metaData, ...existingTags] : existingTags;
+  const modifiedTags = metaData ? [metaData, ...tags] : tags;
 
   const modifiedInit = {
     ...init,
