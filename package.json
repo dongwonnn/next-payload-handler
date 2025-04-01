@@ -1,6 +1,6 @@
 {
   "name": "next-payload-handler",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "Custom handling of Next.js RSC payloads.",
   "keywords": [
     "next",
