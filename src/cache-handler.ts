@@ -42,7 +42,7 @@ export class CacheHandler implements NextCacheHandler {
     CacheHandler.#context = context;
   }
 
-  async initializeHandler<T extends HandlerType>({
+  static async initializeHandler<T extends HandlerType>({
     handlers,
     defaultHandler,
     cacheOptions,
